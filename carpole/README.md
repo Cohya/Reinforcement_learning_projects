@@ -2,5 +2,5 @@
 
 (see: https://gym.openai.com/envs/CartPole-v1/)
 
-Q-learning along with a linear system to estimate the action-value function, Q(s,a), was used here. 
+Q-learning along with a linear system to estimate the action-value function, Q(s,a), were used here. 
 
