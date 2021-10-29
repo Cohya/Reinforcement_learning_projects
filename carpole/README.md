@@ -8,6 +8,7 @@ Required libraries:
 Numpy 
 matplotlib
 gym 
+
 pickle (for save/load the weights)
 
 
