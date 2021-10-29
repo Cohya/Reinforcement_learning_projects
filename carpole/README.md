@@ -15,3 +15,5 @@ Required libraries:
 If you wish to examine a trained agent, please load the weights of the linear equation and
 the features of the radial-basis function by using model(..., load = True).
 
+
+![Alt Text](https://media.giphy.com/media/vFKqnCdLPNOKc/gif.gif)
