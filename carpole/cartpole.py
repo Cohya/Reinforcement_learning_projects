@@ -212,7 +212,7 @@ if __name__ == "__main__":
     
     # Watch trained aget 
 
-    watch_agent(model, env, eps = 0, name = 'trained')
+    watch_agent(model, env, eps = 0, name = 'trained', saveVideo=False)
     
     
             
