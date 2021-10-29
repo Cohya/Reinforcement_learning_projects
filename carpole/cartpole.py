@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 from sklearn.kernel_approximation import RBFSampler
 import pickle
 
-GAMMA = 0.99
-ALPHA = 0.01 # was 0.1 for the catpole-v0
 
 def epsilon_greedy(model, s, eps = 0.1):
     p = np.random.random()
@@ -34,16 +32,33 @@ def gather_samples(env, n_episodes = 10000):
     return samples
 
 class Model(object):
-    def __init__(self, env):
+    def __init__(self, env, load = False):
         self.env = env
         samples = gather_samples(env) 
         self.featurizer = RBFSampler()
-        self.featurizer.fit(samples)
+        
+
+        
+        if load == False:
+            self.featurizer.fit(samples)
+        else:
+            try:
+                with open('features','rb') as features:
+                    self.featurizer = pickle.load(features)
+            
+            except OSError:
+                print('Filed to load the saved features!')
+            else:
+                print('Saved features were loaded!')
+                
+            self.load()
+                
         dims = self.featurizer.n_components
         
         # initialize linear model weights
-        self.w = np.zeros(dims)
-        
+        if not load:
+            self.w = np.zeros(dims)
+            
     def predict(self, s, a):
         sa = np.concatenate((s, [a]))
         x = self.featurizer.transform([sa])[0]
@@ -60,18 +75,19 @@ class Model(object):
         g = err * x
         return g
     
-    def train(self, n_episodes = 5000, plotRewardsPerEpisodes = True):
+    def train(self, n_episodes = 5000, alpha = 0.1,
+              gamma = 0.99, plotRewardsPerEpisodes = True):
         reward_per_episode = []
         
-        
+        # alpha =  # was 0.1 for the catpole-v0
         #repeat until convergence 
         
         for it in range(n_episodes):
             s = env.reset()
             episode_reward = 0
             done = False
-            # if it % 1000:
-            #     ALPHA = ALPHA /10
+            if (it+1) % 1000 == 0:
+                alpha = alpha /2
             while not done :
                 a = epsilon_greedy(model, s)
                 s2, r, done, info = env.step(a)
@@ -81,11 +97,11 @@ class Model(object):
                     target = r
                 else:
                     values = model.predict_all_actions(s2)
-                    target = r + GAMMA * np.max(values)
+                    target = r + gamma * np.max(values)
                     
                 # update the model 
                 g = model.grad(s,a, target)
-                model.w += ALPHA * g
+                model.w += alpha * g
                 
                 # accumilate reward
                 episode_reward += r
@@ -95,9 +111,8 @@ class Model(object):
                 
             if (it + 1) % 50 ==0:
                 print(f"Episode: {it+1}, reward: {episode_reward}")
-                
             # early exit 
-            if it > 60 and np.mean(reward_per_episode[-60:]) == 200:
+            if it > 60 and np.mean(reward_per_episode[-20:]) >= 300:
                 print("Early exit")
                 break
             
@@ -114,6 +129,7 @@ class Model(object):
         
     def save_weights(self):
         fileName = 'weights'
+        fileName2 = 'features'
         
         try:
             with open(fileName, 'wb') as param:
@@ -122,6 +138,15 @@ class Model(object):
             print("Failed to save the weights")
         else:
             print("The weights were saved successfully")
+            
+        try:
+            with open(fileName2, 'wb') as features:
+                pickle.dump(self.featurizer , features)
+        except OSError:
+            print("Failed to save the features")
+        else:
+            print("The features were saved successfully")
+         
             
     def load(self, path = 'weights'):
         try:
@@ -133,8 +158,9 @@ class Model(object):
             print('Filed to load the saved weights!')
         else:
             print('Saved weights were loaded!')
+            
         
-    
+            
 def test_agent(model, env, n_episodes = 20):
     reward_per_episode = np.zeros(n_episodes)
     for it in range(n_episodes):
@@ -171,22 +197,22 @@ if __name__ == "__main__":
     env = gym.make("CartPole-v1")# can also be v0 atthe end 
     
     
-    model = Model(env)
-    # # watch untrained agent (only if you wish)
-    # # watch_agent(model, env, eps = 0, name = 'untrained')
+    model = Model(env,load= True) 
+    # watch untrained agent (only if you wish)
+    # watch_agent(model, env, eps = 0, name = 'untrained')
     
     
-    model.train(n_episodes= 5000,plotRewardsPerEpisodes= True)
+    # model.train(alpha=0.1, n_episodes= 1000,plotRewardsPerEpisodes= True)
     
-    # save the model weights
-    model.save_weights()
+    # save the model weights and features
+    # model.save_weights()
     
     # load teh trained weights (trained agent)
-    # model.load()
+    
     
     # Watch trained aget 
 
-    # watch_agent(model, env, eps = 0, name = 'trained')
+    watch_agent(model, env, eps = 0, name = 'trained')
     
     
             
