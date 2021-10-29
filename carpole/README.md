@@ -16,4 +16,4 @@ If you wish to examine a trained agent, please load the weights of the linear eq
 the features of the radial-basis function by using model(..., load = True).
 
 
-![Alt Text](https://media.giphy.com/media/vFKqnCdLPNOKc/gif.gif)
+![Alt Text](gif.gif)
