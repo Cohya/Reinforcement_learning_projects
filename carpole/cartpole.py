@@ -4,7 +4,6 @@ import gym
 import numpy as np 
 import matplotlib.pyplot as plt 
 from sklearn.kernel_approximation import RBFSampler
-import cv2 
 
 GAMMA = 0.99
 ALPHA = 0.01 # was 0.1 for the catpole-v0
@@ -60,6 +59,59 @@ class Model(object):
         g = err * x
         return g
     
+    def train(self, n_episodes = 5000, plotRewardsPerEpisodes = True):
+        reward_per_episode = []
+        
+        
+        #repeat until convergence 
+        
+        for it in range(n_episodes):
+            s = env.reset()
+            episode_reward = 0
+            done = False
+            # if it % 1000:
+            #     ALPHA = ALPHA /10
+            while not done :
+                a = epsilon_greedy(model, s)
+                s2, r, done, info = env.step(a)
+                
+                # get the target
+                if done:
+                    target = r
+                else:
+                    values = model.predict_all_actions(s2)
+                    target = r + GAMMA * np.max(values)
+                    
+                # update the model 
+                g = model.grad(s,a, target)
+                model.w += ALPHA * g
+                
+                # accumilate reward
+                episode_reward += r
+                
+                # update state
+                s = s2
+                
+            if (it + 1) % 50 ==0:
+                print(f"Episode: {it+1}, reward: {episode_reward}")
+                
+            # early exit 
+            if it > 60 and np.mean(reward_per_episode[-60:]) == 200:
+                print("Early exit")
+                break
+            
+            reward_per_episode.append(episode_reward)
+            
+        # test trained agent 
+        test_reward = test_agent(model, env)
+        print(f"Average test reward: {test_reward}")
+        
+        if plotRewardsPerEpisodes:
+            plt.plot(reward_per_episode)
+            plt.title("Reward per episode")
+            plt.show()
+        
+    
     
 def test_agent(model, env, n_episodes = 20):
     reward_per_episode = np.zeros(n_episodes)
@@ -94,63 +146,18 @@ def watch_agent(model, env, eps, name = 'vid', saveVideo = False):
     
 if __name__ == "__main__":
     # instantiate environment 
-    env = gym.make("CartPole-v0")# can also be v0 atthe end 
+    env = gym.make("CartPole-v1")# can also be v0 atthe end 
+    
     
     model = Model(env)
-    reward_per_episode = []
+    # # watch untrained agent (only if you wish)
+    # # watch_agent(model, env, eps = 0, name = 'untrained')
     
-    # watch untrained agent 
-    watch_agent(model, env, eps = 0, name = 'untrained')
     
-    #repeat until convergence 
-    n_episodes = 4000
+    model.train(plotRewardsPerEpisodes= True)
     
-    for it in range(n_episodes):
-        s = env.reset()
-        episode_reward = 0
-        done = False
-        # if it % 1000:
-        #     ALPHA = ALPHA /10
-        while not done :
-            a = epsilon_greedy(model, s)
-            s2, r, done, info = env.step(a)
-            
-            # get the target
-            if done:
-                target = r
-            else:
-                values = model.predict_all_actions(s2)
-                target = r + GAMMA * np.max(values)
-                
-            # update the model 
-            g = model.grad(s,a, target)
-            model.w += ALPHA * g
-            
-            # accumilate reward
-            episode_reward += r
-            
-            # update state
-            s = s2
-            
-        if (it + 1) % 50 ==0:
-            print(f"Episode: {it+1}, reward: {episode_reward}")
-            
-        # early exit 
-        if it > 60 and np.mean(reward_per_episode[-60:]) == 200:
-            print("Early exit")
-            break
-        
-        reward_per_episode.append(episode_reward)
-        
-    # test trained agent 
-    test_reward = test_agent(model, env)
-    print(f"Average test reward: {test_reward}")
+    # Watch trained aget 
     
-    plt.plot(reward_per_episode)
-    plt.title("Reward per episode")
-    plt.show()
-    
-    # watch trained agent
     watch_agent(model, env, eps = 0, name = 'trained')
     
     
