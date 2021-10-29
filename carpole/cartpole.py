@@ -4,6 +4,7 @@ import gym
 import numpy as np 
 import matplotlib.pyplot as plt 
 from sklearn.kernel_approximation import RBFSampler
+import pickle
 
 GAMMA = 0.99
 ALPHA = 0.01 # was 0.1 for the catpole-v0
@@ -111,7 +112,28 @@ class Model(object):
             plt.title("Reward per episode")
             plt.show()
         
-    
+    def save_weights(self):
+        fileName = 'weights'
+        
+        try:
+            with open(fileName, 'wb') as param:
+                pickle.dump(self.w, param)
+        except OSError:
+            print("Failed to save the weights")
+        else:
+            print("The weights were saved successfully")
+            
+    def load(self, path = 'weights'):
+        try:
+            with open(path,'rb') as param:
+                self.w = pickle.load(param)
+
+                
+        except OSError:
+            print('Filed to load the saved weights!')
+        else:
+            print('Saved weights were loaded!')
+        
     
 def test_agent(model, env, n_episodes = 20):
     reward_per_episode = np.zeros(n_episodes)
@@ -154,11 +176,17 @@ if __name__ == "__main__":
     # # watch_agent(model, env, eps = 0, name = 'untrained')
     
     
-    model.train(plotRewardsPerEpisodes= True)
+    model.train(n_episodes= 5000,plotRewardsPerEpisodes= True)
+    
+    # save the model weights
+    model.save_weights()
+    
+    # load teh trained weights (trained agent)
+    # model.load()
     
     # Watch trained aget 
-    
-    watch_agent(model, env, eps = 0, name = 'trained')
+
+    # watch_agent(model, env, eps = 0, name = 'trained')
     
     
             
