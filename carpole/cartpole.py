@@ -10,7 +10,6 @@ GAMMA = 0.99
 ALPHA = 0.01 # was 0.1 for the catpole-v0
 
 def epsilon_greedy(model, s, eps = 0.1):
-    # we will use epsilon-soft to ensure all states are visited 
     p = np.random.random()
     if p < (1-eps):
         values = model.predict_all_actions(s)
@@ -27,7 +26,7 @@ def gather_samples(env, n_episodes = 10000):
         done = False
         while not done:
             a = env.action_space.sample()
-            sa = np.concatenate((s, [a])) # remember s in (4,1) and a is in R so we set it to (1,1) by [a]
+            sa = np.concatenate((s, [a])) 
             samples.append(sa)
             
             s, r, done, info = env.step(a)
@@ -37,7 +36,7 @@ def gather_samples(env, n_episodes = 10000):
 class Model(object):
     def __init__(self, env):
         self.env = env
-        samples = gather_samples(env) # to collect environments to build a projector/ transformation using radial basis function 
+        samples = gather_samples(env) 
         self.featurizer = RBFSampler()
         self.featurizer.fit(samples)
         dims = self.featurizer.n_components
@@ -52,14 +51,11 @@ class Model(object):
     
     
     def predict_all_actions(self, s):
-        # the actions here in CartPole are numbers (0,1) for right and left 
-        # everything is written in the documentation
         return [self.predict(s,a) for a in range(self.env.action_space.n)]
     
     def grad(self, s,a, target):
         sa = np.concatenate((s,[a]))
         x = self.featurizer.transform([sa])[0]
-        # g = model.grad(s,a)
         err = target - self.predict(s, a)
         g = err * x
         return g
@@ -91,14 +87,14 @@ def watch_agent(model, env, eps, name = 'vid', saveVideo = False):
     while not done:
         a = epsilon_greedy(model, s, eps = eps)
         s, r, done, info = env.step(a)
-        env.render() # to see what happend in the environment
+        env.render()
         episode_reward += r
     print("Episode reward:", episode_reward)
     
     
 if __name__ == "__main__":
     # instantiate environment 
-    env = gym.make("CartPole-v1")# can also be v0 atthe end 
+    env = gym.make("CartPole-v0")# can also be v0 atthe end 
     
     model = Model(env)
     reward_per_episode = []
