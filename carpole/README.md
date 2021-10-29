@@ -12,3 +12,5 @@ Required libraries:
 4) pickle (for save/load the weights)
 
 
+I stop the training right after it achive 20 games with score above 300.
+
