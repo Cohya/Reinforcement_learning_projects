@@ -222,7 +222,7 @@ if __name__ == "__main__":
     # Watch trained aget 
 
     agent.watch_agent(model, env, eps = 0, name = 'trained', saveVideo=False)
-    # model.env.close()
+    model.env.close()
     
             
             
