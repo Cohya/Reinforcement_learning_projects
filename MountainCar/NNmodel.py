@@ -73,11 +73,11 @@ class DenseLayer(object):
     
     
 class nnModel(object):
-    def __init__(self, input_dims, n_actions, nnStructure, lr = 0.1):
+    def __init__(self, input_dims, n_actions, nnStructure, lr = 0.0001):
         self.input_dims = input_dims
         self.n_actions = n_actions
         self.nnStructure = nnStructure #[[20, activationFunc, apply_batch_norm]]
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate = lr)#Adam
+        self.optimizer = tf.keras.optimizers.SGD(learning_rate = lr)#Adam
         
         ## let's build the nn 
         self.layers = []

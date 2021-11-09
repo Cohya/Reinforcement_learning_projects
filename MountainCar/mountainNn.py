@@ -23,7 +23,7 @@ class Agent(object):
         self.env = env
         
         self.model = nnModel(input_dims = self.env.observation_space.shape[0],
-                             n_actions = self.env.action_space.n, nnStructure = nnStructure)
+                             n_actions = self.env.action_space.n, nnStructure = nnStructure, lr = 0.0001)
         
         
     def act(self, state, epsilon , is_training = False):
@@ -32,13 +32,38 @@ class Agent(object):
         act_values = self.model.predict(state, is_training = is_training)
         return np.argmax(act_values[0])
     
+    
+    def costumReward(self, r, s2,s):
+        # print(old_state, "dsfg", s)
+        # print("Delta position:", (s[0][0] - old_state[0][0]), "velocity:", s[0][1])
+        # if s[0][0] >= 0.5:
+        #     r = 10000
+            
+        #     print("Win")
+        # # elif ((s[0][0] - old_state[0][0]) > 0 and s[0][1] > 0) or ((s[0][0] - old_state[0][0]) < 0 and s[0][1] < 0):
+        # #         r = 15# * abs(s[0][0] - old_state[0][0]) 
+        # #         # print("r234")
+        # else:
+        #     # print("r3",s[0][0] )
+        #     r = -10 
+            
+        r =  100 * ((np.sin(3 * s2[0][0]) * 0.0025 + 0.5 * s2[0][1] * s2[0][1]) -
+                    (np.sin(3 * s[0][0]) * 0.0025 + 0.5 * s[0][1] * s[0][1])) 
+        
+        if s2[0][0] >= 0.5:
+            r += 1
+        return r
+                
+            
+        
     def train(self, n_episodes = 5000, alpha = 0.1,
               gamma = 0.99, plotRewardsPerEpisodes = True):
         reward_per_episode = []
         
         # alpha =  # was 0.1 for the catpole-v0
         #repeat until convergence 
-        
+        update_counter = 0
+        epsilon = 1
         for it in range(n_episodes):
             s = self.env.reset()
             
@@ -50,10 +75,15 @@ class Agent(object):
             if (it+1) % 1000 == 0:
                 alpha = alpha /2
             while not done :
-                a = self.act(s, epsilon = 0.1, is_training= True )
+                a = self.act(s, epsilon = epsilon, is_training= True )
                 s2, r, done, info = self.env.step(a)
+                
+                
                 s2 = np.array(s2).astype('float32')
                 s2 = np.expand_dims(s2, axis = 0)
+                
+                r = self.costumReward(r, s2, s)
+                # print("s2:", s2, "s", s)
                 # get the target
                 if done:
                     target = r
@@ -74,13 +104,16 @@ class Agent(object):
                 
                 # update state
                 s = s2
-                
-            if (it + 1) % 50 ==0:
+            epsilon = 0.01 + (1 - 0.01) * np.exp(- 0.001 * (update_counter))
+            update_counter += 1
+            if epsilon < 0.01:
+                epsilon = 0.01
+            if (it + 1) % 10 ==0:
                 print(f"Episode: {it+1}, reward: {episode_reward}")
             # early exit 
-            if it > 60 and np.mean(reward_per_episode[-20:]) >= 300:
-                print("Early exit")
-                break
+            # if it > 60 and np.mean(reward_per_episode[-20:]) >= 300:
+            #     print("Early exit")
+            #     break
             
             reward_per_episode.append(episode_reward)
             
@@ -106,10 +139,17 @@ class Agent(object):
             s = np.expand_dims(s, axis = 0)
             while not done:
                 a = self.act(s, epsilon = 0, is_training=False) # follow your best policy 
-                s, r, done,info = env.step(a)
+                s2, r, done,info = env.step(a)
+                
+                s2 = np.array(s).astype('float32')
+                s2 = np.expand_dims(s, axis = 0)
+                
+                r = self.costumReward(r, s2, s)
+                
                 episode_reward += r
-                s = np.array(s).astype('float32')
-                s = np.expand_dims(s, axis = 0)
+                
+                s = s2
+
                 
             reward_per_episode[it] = episode_reward
         return np.mean(reward_per_episode)
@@ -141,10 +181,11 @@ if __name__ == "__main__":
     activationFunc = tf.nn.relu
     apply_batch_norm = False
     
-    agent = Agent(nnStructure= [[20, activationFunc, apply_batch_norm],
-                                [20, activationFunc, apply_batch_norm]], 
+    agent = Agent(nnStructure= [[64, activationFunc, apply_batch_norm],
+                                [128, activationFunc, apply_batch_norm],
+                                ], 
                   env = env)
-    agent.train(n_episodes= 100, alpha= 0.1, gamma= 0.99)
+    agent.train(n_episodes= 15, alpha= 0.1, gamma= 0.99)
     
     # # watch untrained agent (only if you wish)
     # watch_agent(model, env, eps = 0, name = 'untrained')
@@ -160,7 +201,7 @@ if __name__ == "__main__":
     # # Watch trained aget 
 
     agent.watch_agent(env, eps = 0, name = 'trained', saveVideo=True )
-    env.close()
+
     
             
             
