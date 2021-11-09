@@ -36,22 +36,22 @@ class Agent(object):
     def costumReward(self, r, s2,s):
         # print(old_state, "dsfg", s)
         # print("Delta position:", (s[0][0] - old_state[0][0]), "velocity:", s[0][1])
-        # if s[0][0] >= 0.5:
-        #     r = 10000
+        if s[0][0] >= 0.5:
+            r = 10000
             
-        #     print("Win")
-        # # elif ((s[0][0] - old_state[0][0]) > 0 and s[0][1] > 0) or ((s[0][0] - old_state[0][0]) < 0 and s[0][1] < 0):
-        # #         r = 15# * abs(s[0][0] - old_state[0][0]) 
-        # #         # print("r234")
-        # else:
-        #     # print("r3",s[0][0] )
-        #     r = -10 
+            print("Win")
+        elif ((s2[0][0] - s[0][0]) > 0 and s2[0][1] > 0) or ((s2[0][0] - s[0][0]) < 0 and s2[0][1] < 0):
+                r = 15# * abs(s[0][0] - old_state[0][0]) 
+                # print("r234")
+        else:
+            # print("r3",s[0][0] )
+            r = -10 
             
-        r =  100 * ((np.sin(3 * s2[0][0]) * 0.0025 + 0.5 * s2[0][1] * s2[0][1]) -
-                    (np.sin(3 * s[0][0]) * 0.0025 + 0.5 * s[0][1] * s[0][1])) 
+        # r =  100 * ((np.sin(3 * s2[0][0]) * 0.0025 + 0.5 * s2[0][1] * s2[0][1]) -
+        #             (np.sin(3 * s[0][0]) * 0.0025 + 0.5 * s[0][1] * s[0][1])) 
         
-        if s2[0][0] >= 0.5:
-            r += 1
+        # if s2[0][0] >= 0.5:
+        #     r += 1
         return r
                 
             
@@ -61,7 +61,8 @@ class Agent(object):
         reward_per_episode = []
         
         # alpha =  # was 0.1 for the catpole-v0
-        #repeat until convergence 
+        #repeat until convergence
+        infow = []
         update_counter = 0
         epsilon = 1
         for it in range(n_episodes):
@@ -85,6 +86,9 @@ class Agent(object):
                 r = self.costumReward(r, s2, s)
                 # print("s2:", s2, "s", s)
                 # get the target
+                
+                
+                
                 if done:
                     target = r
                 else:
@@ -92,13 +96,17 @@ class Agent(object):
                     # values = self.model.predict_all_actions(s2)
                     target = r + gamma * value
 
-
-                target_full = self.model.predict(X = s, is_training = True)
-                target_full = np.array(target_full.numpy(), dtype ='float32')
-                target_full[0,a] = target
+                infow.append([s,s2,r,target ,a, done])
+                if len(info) == 32:
+                    for kl in infow:
+                        s, s2,r,target, a, done = kl
+                        target_full = self.model.predict(X = s, is_training = True)
+                        target_full = np.array(target_full.numpy(), dtype ='float32')
+                        target_full[0,a] = target
                 
                 
-                self.model.train(X = s, Y =  target_full)
+                        self.model.train(X = s, Y =  target_full)
+                    info = []
                 # accumilate reward
                 episode_reward += r
                 
@@ -108,7 +116,7 @@ class Agent(object):
             update_counter += 1
             if epsilon < 0.01:
                 epsilon = 0.01
-            if (it + 1) % 10 ==0:
+            if (it + 1) % 1 ==0:
                 print(f"Episode: {it+1}, reward: {episode_reward}")
             # early exit 
             # if it > 60 and np.mean(reward_per_episode[-20:]) >= 300:
@@ -185,7 +193,7 @@ if __name__ == "__main__":
                                 [128, activationFunc, apply_batch_norm],
                                 ], 
                   env = env)
-    agent.train(n_episodes= 15, alpha= 0.1, gamma= 0.99)
+    agent.train(n_episodes= 50, alpha= 0.1, gamma= 0.99)
     
     # # watch untrained agent (only if you wish)
     # watch_agent(model, env, eps = 0, name = 'untrained')
