@@ -15,3 +15,4 @@ Required libraries:
 
 
 ![Alt Text](gif.gif)
+![plot](plots/R_episodes.png)
