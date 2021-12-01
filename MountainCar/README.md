@@ -15,4 +15,4 @@ Required libraries:
 
 
 ![Alt Text](gif.gif)
-![plot](./plots/COstToGo.png)
+![plot](plots/CostToGo.png)
