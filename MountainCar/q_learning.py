@@ -1,10 +1,6 @@
 
 # Here we are going to implement Q-learning with RBF network to solve mountaincar
 
-# Note: gym change from version 0.7.3 to 0.8.0
-# MountainCar episode length is capped at 200 in later versions 
-# THis means your agent can't learn as much in the earlier episodes 
-# since they are no longer as long 
 
 import pickle
 import gym
@@ -23,12 +19,6 @@ from sklearn.kernel_approximation import RBFSampler
 from sklearn.linear_model import SGDRegressor
 
 
-# SGDRegressor defaults:
-    # loss = 'squred_loss', penalty = 'l2', alpha  = 1e-4
-    # l1_ration = 0.15, fit_intercept = TRue, n_iter = 5, shuffle = True
-    # verbose = 0, epsilon= 0.1, random_state = None, learning_rate = 'invscaling'
-    # eta0 = 0.01, power_t = 0.25, warm_start = False, average = False
-    # THE LEARNING RATE IS eta0
     
 
 # Inspired by https://github.com/dennybritz/reinforcement-learning
@@ -39,8 +29,6 @@ class FeatureTransformer:
         scaler = StandardScaler()
         scaler.fit(observation_examples) # just for scaling 
         
-        # usedf to convert a state to a featurized representation.
-        # We use RBF kernels with different variances to cover different parts of the space
         featurizer = FeatureUnion([
             ("rbf1", RBFSampler(gamma = 5.0, n_components = n_components)),
             ("rbf2", RBFSampler(gamma = 2.0, n_components = n_components)),
@@ -84,13 +72,6 @@ class Model:
         self.models[a].partial_fit(X, [G]) # we update only the model of this specific action 
         
     def sample_action(self, s, eps):
-        # eps = 0
-        # Technically, we don't need to do epsilon greedy 
-        # because SGDRegressor predicts 0 for all states 
-        # until they are updated. This works as the
-        # "Optimistic initial Values" method, since all 
-        # the rewards for the MountainCar are -1 
-        
         if np.random.random() < eps:
             return self.env.action_space.sample()
         else:
