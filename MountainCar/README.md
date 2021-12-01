@@ -16,3 +16,4 @@ Required libraries:
 
 ![Alt Text](gif.gif)
 ![plot](plots/R_episodes.png)
+![plot](plots/CostToGo.png)
