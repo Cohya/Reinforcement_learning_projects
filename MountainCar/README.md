@@ -15,4 +15,4 @@ Required libraries:
 
 
 ![Alt Text](gif.gif)
-![plot](plots/CostToGo.png)
+![plot](plots/R_episodes.png)
