@@ -1,4 +1,4 @@
-# CartPole - using Open AI gym 
+# MountainCar - using Open AI gym 
 
 (see: https://gym.openai.com/envs/CartPole-v1/)
 
